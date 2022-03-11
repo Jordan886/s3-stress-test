@@ -45,9 +45,10 @@ For huge file numbers or huge buckets i reccomend using tmux
 | --access-key **(required)**   | user                   | the s3 user access key |
 | --secret-key **(required)** 	|	secret                 | number of cores to be used |
 | --bucket **(required)**  		  | mybucket	             | the bucket to use for test |
-| --read 		                    | /subfolder             | peform a list on all files in the specified path |
+| --read 		                    |                        | peform a list on all files in the bucket |
+| --read-max-files              | 1000                   | maximum number of files to read (needed because s3 module does not take infinite number)
 | --write                       |                        | perform a write operation, if read and write are used together will perform both in the order write/read |
-| --num-files	                  | 3                      | number of files to be write **(default 1)** |
+| --write-files                 | 3                      | number of files to be write **(default 1)** |
 | --file-size                   | 8192                   | file size in bytes to use for write test **(default 8192 (8K))** |
 | --files-per-folder            | 100                    | optional argument if you want to organize the files in various folders (useful to simulate a non-flat bucket with milions of files)
 | --log-level                   | INFO                   | this will show some output but be careful it can slow down the execution especially for large operations.
