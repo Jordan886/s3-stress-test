@@ -25,7 +25,9 @@ args = parser.parse_args()
 
 # Set common variables
 
-ENDPOINT_URL = ( 'https://' + args.url)
+ENDPOINT_URL = args.url
+if not ENDPOINT_URL.startswith('http'):
+  raise Exception("Url should be in formart http(s)://url ")
 AWS_ACCESS_KEY_ID = args.access_key
 AWS_SECRET_ACCESS_KEY = args.secret_key
 AWS_BUCKET = args.bucket
@@ -49,68 +51,68 @@ s3_client = boto3.client('s3',
 
 
 def generate_random_file(size):
-    """Generate random file of any size."""
-    file = (os.urandom(size))
-    return file
+  """Generate random file of any size."""
+  file = (os.urandom(size))
+  return file
 
 def upload_object(filename,file,bucket):
-    """Upload an object to a s3 bucket."""
-    response = s3_client.put_object(
-                          Body=file,
-                          Bucket=bucket,
-                          Key=filename,
-                      )
-    return response
+  """Upload an object to a s3 bucket."""
+  response = s3_client.put_object(
+                        Body=file,
+                        Bucket=bucket,
+                        Key=filename,
+                    )
+  return response
 
 
 def s3_bench_write(size,files_number,bucket,files_per_folder):
-    """Generates and upload the file on s3."""
-    file_path = ''
-    file_counter = None
+  """Generates and upload the file on s3."""
+  file_path = ''
+  file_counter = None
+  if files_per_folder:
+    file_counter = 0
+    file_path = str(0) + '/'
+  for file_num in range(files_number):
     if files_per_folder:
+      file_counter = file_counter + 1
+      if file_counter > files_per_folder:
+        # set path name
+        file_path = str(file_num) + '/'
         file_counter = 0
-        file_path = str(0) + '/'
-    for file_num in range(files_number):
-        if files_per_folder:
-            file_counter = file_counter + 1
-            if file_counter > files_per_folder:
-                # set path name
-                file_path = str(file_num) + '/'
-                file_counter = 0
-        binary_file = generate_random_file(size)
-        file_name = file_path + str(uuid.uuid4())
-        logging.info('uploading file %d of %d: %s ', file_num, FILES_NUM, file_name)
-        upload_object(file_name,binary_file,bucket)
+    binary_file = generate_random_file(size)
+    file_name = file_path + str(uuid.uuid4())
+    logging.info('uploading file %d of %d: %s ', file_num, FILES_NUM, file_name)
+    upload_object(file_name,binary_file,bucket)
 
 
 def s3_bench_read(bucket,limit):
-    """List all files in the specified bucket/path."""
-    logging.info('start reading objects...')
-    response = s3_client.list_objects_v2(Bucket=bucket, MaxKeys = limit)
-    if LOG_LEVEL == getattr(logging,'INFO'):
-        count = 0
-        if 'Contents' in response.keys():
-            for _ in response['Contents']:
-                count = count + 1
-        logging.info('reading completed, found %d objects', count)
-    logging.info('objects reading completed')
+  """List all files in the specified bucket/path."""
+  logging.info('start reading objects...')
+  response = s3_client.list_objects_v2(Bucket=bucket, MaxKeys = limit)
+  if LOG_LEVEL == getattr(logging,'INFO'):
+    count = 0
+    if 'Contents' in response.keys():
+      for _ in response['Contents']:
+        count = count + 1
+    logging.info('reading completed, found %d objects', count)
+  logging.info('objects reading completed')
 
 
 
 # Script execution
 if PERFORM_WRITE:
-    logging.info('begin write operations...')
-    start_time = time.time()
-    s3_bench_write(FILES_SIZE,FILES_NUM,AWS_BUCKET,FILES_PER_FOLDER)
-    end_time = time.time()
-    time_elapsed = (end_time - start_time)
-    logging.info('write operation completed in %d seconds ',time_elapsed)
+  logging.info('begin write operations...')
+  start_time = time.time()
+  s3_bench_write(FILES_SIZE,FILES_NUM,AWS_BUCKET,FILES_PER_FOLDER)
+  end_time = time.time()
+  time_elapsed = (end_time - start_time)
+  logging.info('write operation completed in %d seconds ',time_elapsed)
 if PERFORM_READ:
-    logging.info('begin read operations')
-    start_time = time.time()
-    s3_bench_read(AWS_BUCKET,READ_FILES_LIMIT)
-    end_time = time.time()
-    time_elapsed = (end_time - start_time)
-    logging.info('read operation completed in %d seconds ', time_elapsed)
+  logging.info('begin read operations')
+  start_time = time.time()
+  s3_bench_read(AWS_BUCKET,READ_FILES_LIMIT)
+  end_time = time.time()
+  time_elapsed = (end_time - start_time)
+  logging.info('read operation completed in %d seconds ', time_elapsed)
 
 logging.info('end')
